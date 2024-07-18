@@ -35,6 +35,54 @@ results = benchmark(model, example_input)
 ```
 You can run ```example.py``` to see the output in your terminal and play with the different functions. 
 
+
+## Advanced Usage 
+### Tracking gpu memory for a torch model
+```python
+from benchmark_tool import track_gpu_memory
+
+with track_gpu_memory():
+    # Your GPU operations here
+    pass
+
+max_memory = track_gpu_memory.max_memory
+current_memory = track_gpu_memory.current_memory
+print(f"Max GPU memory used: {max_memory:.2f} MB")
+print(f"Current GPU memory used: {current_memory:.2f} MB")
+```
+### Getting info about GPU memory
+```python
+from benchmark_tool import detailed_memory_info
+
+detailed_memory_info()
+```
+### Calculating model sparsity 
+```python 
+from benchmark_tool import get_model_sparsity, get_layer_sparsity
+
+sparsity = get_model_sparsity(model)
+print(f"Model sparsity: {sparsity:.2f}")
+
+get_layer_sparsity(model)
+```
+
+### Visualizations
+
+When plot=True is set in the benchmark function, two plots will be generated:
+
+1) *num_parameters_distribution.png*: Bar chart showing the number of parameters in each layer.
+2) *weight_distribution.png*: Histograms of weight distributions for each layer.
+
+These plots can provide insights into the model's architecture and weight patterns.
+
+
+### Notes
+
+- Ensure you have a CUDA-capable GPU for GPU benchmarking.
+- The tool uses CUDA events for precise GPU timing.
+- Memory usage is tracked using PyNVML.
+- MACs calculation requires the [torchprofile](https://github.com/zhijian-liu/torchprofile) package.
+
 ## API Reference
 
 ### Main Function
@@ -58,14 +106,14 @@ Runs a comprehensive benchmark on the given model.
 Measures the inference time of the model on CPU.
 
 - **Parameters:** Same as `benchmark`
-- **Returns:** mean_syn, std_syn, fps
+- **Returns:** mean_syn (in ms), std_syn (in ms), fps
 
 #### `measure_latency_gpu(model, dummy_input, n_warmup=50, n_test=200)`
 
 Measures the inference time of the model on GPU.
 
 - **Parameters:** Same as `benchmark`
-- **Returns:** mean_syn, std_syn, fps
+- **Returns:** mean_syn (in ms), std_syn (in ms), fps
 
 #### `get_model_macs(model, inputs) -> int`
 
