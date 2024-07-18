@@ -83,6 +83,17 @@ These plots can provide insights into the model's architecture and weight patter
 - Memory usage is tracked using PyNVML.
 - MACs calculation requires the [torchprofile](https://github.com/zhijian-liu/torchprofile) package.
 
+
+## Contributing
+
+This project started as a personal tool to simplify the process of benchmarking models on EdgeAI resources. It's designed to be a lightweight, easy-to-use solution that can be quickly installed and utilized.
+
+While this is primarily a personal project, I'm open to suggestions and improvements. If you have ideas or find any issues, feel free to:
+
+1. Open an issue on the GitHub repository to report bugs or suggest enhancements.
+2. Submit pull requests for minor fixes or improvements..
+
+If you find this tool helpful, feel free to star the repository or share it with others who might benefit from it. Thanks for your interest!
 ## API Reference
 
 ### Main Function
