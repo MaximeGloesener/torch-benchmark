@@ -14,10 +14,10 @@ This tool provides a comprehensive set of utilities for benchmarking PyTorch mod
 
 ## Installation
 
-Ensure you have PyTorch and the following dependencies installed:
+You can install the package using pip:
 
 ```bash
-pip install torch pynvml matplotlib numpy colorama torchprofile
+pip install pytorch-bench
 ```
 
 ## Example
