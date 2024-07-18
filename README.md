@@ -21,7 +21,19 @@ pip install torch pynvml matplotlib numpy colorama torchprofile
 ```
 
 ## Example
-see ```example.py```
+```python 
+import torch 
+from torchvision.models import resnet50, ResNet50_Weights
+from main import benchmark
+
+# Load model and example input
+model = resnet50(weights=ResNet50_Weights.DEFAULT)
+example_input = torch.randn(1, 3, 224, 224)
+
+# Run benchmark 
+results = benchmark(model, example_input)
+```
+You can run ```example.py``` to see output in your terminal and play with the differents functions. 
 
 ## API Reference
 
