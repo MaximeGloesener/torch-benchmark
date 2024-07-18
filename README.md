@@ -24,7 +24,7 @@ pip install torch pynvml matplotlib numpy colorama torchprofile
 ```python 
 import torch 
 from torchvision.models import resnet50, ResNet50_Weights
-from main import benchmark
+from pytorch_bench import benchmark
 
 # Load model and example input
 model = resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -39,7 +39,7 @@ You can run ```example.py``` to see the output in your terminal and play with th
 ## Advanced Usage 
 ### Tracking gpu memory for a torch model
 ```python
-from benchmark_tool import track_gpu_memory
+from pytorch_bench import track_gpu_memory
 
 with track_gpu_memory():
     # Your GPU operations here
@@ -52,13 +52,13 @@ print(f"Current GPU memory used: {current_memory:.2f} MB")
 ```
 ### Getting info about GPU memory
 ```python
-from benchmark_tool import detailed_memory_info
+from pytorch_bench import detailed_memory_info
 
 detailed_memory_info()
 ```
 ### Calculating model sparsity 
 ```python 
-from benchmark_tool import get_model_sparsity, get_layer_sparsity
+from pytorch_bench import get_model_sparsity, get_layer_sparsity
 
 sparsity = get_model_sparsity(model)
 print(f"Model sparsity: {sparsity:.2f}")

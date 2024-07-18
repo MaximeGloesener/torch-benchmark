@@ -1,1 +1,19 @@
-/__pycache__
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Build files
+build/
+
+# IDE-specific files (e.g., for PyCharm or VS Code)
+.idea/
+.vscode/
+
+/lib/
+/dist/
+/*.egg-info/
