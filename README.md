@@ -33,7 +33,7 @@ example_input = torch.randn(1, 3, 224, 224)
 # Run benchmark 
 results = benchmark(model, example_input)
 ```
-You can run ```example.py``` to see output in your terminal and play with the differents functions. 
+You can run ```example.py``` to see the output in your terminal and play with the different functions. 
 
 ## API Reference
 
