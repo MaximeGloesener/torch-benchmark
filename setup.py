@@ -2,16 +2,15 @@ from setuptools import setup, find_packages
 
 setup(
     name="pytorch_bench",
-    version="0.1",
+    version="0.1.2",
     packages=find_packages(),
     install_requires=[
-        # List your dependencies here
         "torch",
         "pynvml",
         "matplotlib",
         "numpy",
-        "colorama",
-        "torchprofile"
+        "torchprofile",
+        "codecarbon"
     ],
     author="Maxime Gloesener",
     author_email="max.gleu@gmail.com",
