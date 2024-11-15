@@ -9,6 +9,7 @@ import time
 import numpy as np
 import colorama
 from colorama import Fore, Style
+from codecarbon import EmissionsTracker
 
 
 
@@ -26,7 +27,7 @@ def track_gpu_memory():
         current_memory = torch.cuda.memory_allocated() / 1e6
         # print(f"Max GPU memory allocated: {max_memory:.2f} MB")
         # print(f"Current GPU memory allocated: {current_memory:.2f} MB")
-        
+
     # Store the memory usage in the context manager object
     track_gpu_memory.max_memory = max_memory
     track_gpu_memory.current_memory = current_memory
@@ -178,18 +179,18 @@ def measure_latency_cpu(model, dummy_input, n_warmup=50, n_test=200):
             _ = model(dummy_input)
             t2 = time.perf_counter()
             timings[i] = t2-t1
-        
+
     # time.perf_counter() returns time in s -> converted to ms (*1000)
     mean_syn = np.sum(timings) / n_test * 1000
     std_syn = np.std(timings) * 1000
     fps = batch_size*1000/mean_syn
     # print(f'Inference time CPU (ms/image):{mean_syn/batch_size:.3f} ms +/- {std_syn/batch_size:.3f} ms')
     # print(f'FPS CPU: {fps:.2f}')
-    return mean_syn, std_syn, fps  
+    return mean_syn, std_syn, fps
 
 
 @torch.no_grad()
-def measure_latency_gpu(model, dummy_input, n_warmup=50, n_test=200):
+def measure_latency_gpu(model, dummy_input, n_warmup=20, n_test=200):
     """
     measure the inference time of the model on gpu
     """
@@ -222,54 +223,79 @@ def measure_latency_gpu(model, dummy_input, n_warmup=50, n_test=200):
     fps = batch_size*1000/mean_syn
     # print(f'Inference time GPU (ms/image): {mean_syn/batch_size:.3f} ms +/- {std_syn/batch_size:.3f} ms')
     # print(f'FPS GPU: {fps:.2f}')
-    return mean_syn, std_syn, fps 
+    return mean_syn, std_syn, fps
 
 
 
+def evaluate_emissions(model, dummy_input, warmup_rounds=20, test_rounds=100):
+    device = torch.device("cuda")
+    model.eval()
+    model.to(device)
+    dummy_input = dummy_input.to(device)
 
-colorama.init(autoreset=True)
+    # Warm up GPU
+    for _ in range(warmup_rounds):
+        _ = model(dummy_input)
 
-def format_number(num):
-    if num >= 1e9:
-        return f"{num/1e9:.2f}B"
-    elif num >= 1e6:
-        return f"{num/1e6:.2f}M"
-    elif num >= 1e3:
-        return f"{num/1e3:.2f}K"
-    else:
-        return f"{num:.2f}"
+    # Measure Latency
+    with EmissionsTracker(log_level='critical') as tracker:
+        for _ in range(test_rounds):
+            _ = model(dummy_input)
+    total_emissions = tracker.final_emissions
+    total_energy_consumed = tracker.final_emissions_data.energy_consumed
+
+    # Calculate average emissions and energy consumption per inference
+    average_emissions_per_inference = total_emissions / test_rounds
+    average_energy_per_inference = total_energy_consumed / test_rounds
+
+    return total_emissions, total_energy_consumed, average_emissions_per_inference, average_energy_per_inference
+
 
 @torch.no_grad()
-def benchmark(model, dummy_input, n_warmup=50, n_test=200, plot=False):
+def benchmark(model, dummy_input, n_warmup=50, n_test=200, plot=False, gpu_only=False):
     batch_size = dummy_input.shape[0]
     dummy_input = dummy_input.to('cpu')
-    mean_syn_cpu, std_syn_cpu, fps_cpu = measure_latency_cpu(model, dummy_input, n_warmup, n_test)
+
+    # Measure CPU latency only if gpu_only is False
+    if not gpu_only:
+        mean_syn_cpu, std_syn_cpu, fps_cpu = measure_latency_cpu(model, dummy_input, n_warmup, n_test)
+    else:
+        mean_syn_cpu, std_syn_cpu, fps_cpu = None, None, None  # Skip CPU measurements
+
     dummy_input = dummy_input.to('cuda')
     with track_gpu_memory():
         mean_syn_gpu, std_syn_gpu, fps_gpu = measure_latency_gpu(model, dummy_input, n_warmup, n_test)
     max_memory_used = track_gpu_memory.max_memory
     current_memory_used = track_gpu_memory.current_memory
 
+    total_emissions, total_energy_consumed, average_emissions_per_inference, average_energy_per_inference = evaluate_emissions(model, dummy_input, warmup_rounds=n_warmup, test_rounds=n_test)
     num_parameters = get_num_parameters(model)
     model_size = get_model_size(model)
     num_macs = get_model_macs(model, dummy_input) / batch_size
-    
-    print(f"{Fore.YELLOW}{Style.BRIGHT}benchmark results")
+
+    print(f"benchmark results")
     print('----------------------------')
-    print(f"{Fore.GREEN}Number of parameters: {Fore.WHITE}{format_number(num_parameters)}")
-    print(f"{Fore.GREEN}Model Size: {Fore.WHITE}{model_size/MiB:.3f} MiB")
-    print(f"{Fore.GREEN}Number of MACs: {Fore.WHITE}{format_number(num_macs)}")
+    print(f"Number of parameters: {num_parameters/1e6:.3f} M")
+    print(f"Model Size: {model_size/MiB:.3f} MiB")
+    print(f"Number of MACs: {num_macs/1e9:.3f} B")
 
-    print(f"\n{Fore.MAGENTA}Memory Usage:")
-    print(f"  {Fore.BLUE}Max memory used: {Fore.WHITE}{format_number(max_memory_used)} MB")
-    print(f"  {Fore.BLUE}Current memory used: {Fore.WHITE}{format_number(current_memory_used)} MB")
+    print(f"\nMemory Usage:")
+    print(f"  Max memory used: {max_memory_used:.2f} MB")
+    print(f"  Current memory used: {current_memory_used:.2f} MB")
 
-    print(f"\n{Fore.MAGENTA}Performance:")
-    print(f"  {Fore.BLUE}CPU: {Fore.WHITE}{fps_cpu:.2f} FPS (±{std_syn_cpu:.2f} ms)")
-    print(f"  {Fore.BLUE}GPU: {Fore.WHITE}{fps_gpu:.2f} FPS (±{std_syn_gpu:.2f} ms)")
+    print(f"\nPerformance:")
+    if not gpu_only:
+        print(f"  CPU: {fps_cpu:.2f} FPS (±{std_syn_cpu:.2f} ms)")
+    print(f"  GPU: {fps_gpu:.2f} FPS (±{std_syn_gpu:.2f} ms)")
+
+    print(f"\nEmissions:")
+    print(f"  Total emissions: {total_emissions*1e3:.4f} gCO2")
+    print(f"  Total energy consumed: {total_energy_consumed*1e3:.4f} Wh")
+    print(f"  Average emissions per inference: {average_emissions_per_inference*1e3:.8f} gCO2")
+    print(f"  Average energy consumed per inference: {average_energy_per_inference*1e3:.8f} Wh")
 
     if plot:
-        print(f"\n{Fore.MAGENTA}Generating plots...")
+        print(f"\nGenerating plots...")
         plot_num_parameters_distribution(model)
         plot_weight_distribution(model)
 
@@ -282,11 +308,13 @@ def benchmark(model, dummy_input, n_warmup=50, n_test=200, plot=False):
         'current_memory_used': current_memory_used,
         'fps_cpu': fps_cpu,
         'fps_gpu': fps_gpu,
-        'std_cpu': std_syn_cpu, 
+        'std_cpu': std_syn_cpu,
         'std_gpu': std_syn_gpu,
-        'std_syn_cpu': std_syn_cpu,
-        'std_syn_gpu': std_syn_gpu
+        'total_emissions': total_emissions,
+        'total_energy_consumed': total_energy_consumed,
+        'average_emissions_per_inference': average_emissions_per_inference,
+        'average_energy_per_inference': average_energy_per_inference
     }
-    
+
 
 
