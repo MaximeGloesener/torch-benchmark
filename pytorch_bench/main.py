@@ -1,22 +1,18 @@
 import torch
 import pynvml
 from contextlib import contextmanager
-import torch
 from torchprofile import profile_macs
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import time
 import numpy as np
-import colorama
-from colorama import Fore, Style
 from codecarbon import EmissionsTracker
-
 
 
 @contextmanager
 def track_gpu_memory():
     """
-    Context manager to track GPU memory usage during inference
+    context manager to track GPU memory usage during inference
     """
     torch.cuda.reset_peak_memory_stats()
     torch.cuda.empty_cache()
@@ -25,10 +21,6 @@ def track_gpu_memory():
     finally:
         max_memory = torch.cuda.max_memory_allocated() / 1e6
         current_memory = torch.cuda.memory_allocated() / 1e6
-        # print(f"Max GPU memory allocated: {max_memory:.2f} MB")
-        # print(f"Current GPU memory allocated: {current_memory:.2f} MB")
-
-    # Store the memory usage in the context manager object
     track_gpu_memory.max_memory = max_memory
     track_gpu_memory.current_memory = current_memory
 
