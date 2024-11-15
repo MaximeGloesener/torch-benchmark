@@ -17,3 +17,5 @@ build/
 /lib/
 /dist/
 /*.egg-info/
+
+emissions.csv
