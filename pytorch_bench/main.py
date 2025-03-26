@@ -248,6 +248,8 @@ def benchmark(model, dummy_input, n_warmup=50, n_test=200, plot=False, gpu_only=
     batch_size = dummy_input.shape[0]
     dummy_input = dummy_input.to('cpu')
 
+    num_macs = get_model_macs(model, dummy_input) / batch_size
+
     # Measure CPU latency only if gpu_only is False
     if not gpu_only:
         mean_syn_cpu, std_syn_cpu, fps_cpu = measure_latency_cpu(model, dummy_input, n_warmup, n_test)
@@ -263,7 +265,7 @@ def benchmark(model, dummy_input, n_warmup=50, n_test=200, plot=False, gpu_only=
     total_emissions, total_energy_consumed, average_emissions_per_inference, average_energy_per_inference = evaluate_emissions(model, dummy_input, warmup_rounds=n_warmup, test_rounds=n_test)
     num_parameters = get_num_parameters(model)
     model_size = get_model_size(model)
-    num_macs = get_model_macs(model, dummy_input) / batch_size
+
 
     print(f"benchmark results")
     print('----------------------------')
