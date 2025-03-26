@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 from codecarbon import EmissionsTracker
+import warnings
+warnings.filterwarnings("ignore")
 
 
 @contextmanager
