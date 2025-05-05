@@ -1,5 +1,6 @@
 import torch
 from pytorch_bench import benchmark
+from torchvision.models import resnet50
 
 # Load model and example input
 model = resnet50(weights="DEFAULT")
