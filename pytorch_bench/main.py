@@ -158,12 +158,14 @@ def evaluate_emissions(model, dummy_input, warmup_rounds=20, test_rounds=100):
 def benchmark_general_model(model, dummy_input, n_warmup=30, n_test=300, plot=False, gpu_only=False):
     batch_size = dummy_input.shape[0]
     dummy_input = dummy_input.to('cpu')
+    model = model.to('cpu')  # Ensure model is on CPU for CPU benchmark
     num_macs = get_model_macs(model, dummy_input) / batch_size
     if not gpu_only:
         mean_syn_cpu, std_syn_cpu, fps_cpu = measure_latency_cpu(model, dummy_input, n_warmup, n_test)
     else:
         mean_syn_cpu, std_syn_cpu, fps_cpu = None, None, None
     dummy_input = dummy_input.to('cuda')
+    model = model.to('cuda')  # Ensure model is on CUDA for GPU benchmark
     with track_gpu_memory():
         mean_syn_gpu, std_syn_gpu, fps_gpu = measure_latency_gpu(model, dummy_input, n_warmup, n_test)
     max_memory_used = track_gpu_memory.max_memory
