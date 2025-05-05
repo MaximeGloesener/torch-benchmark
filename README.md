@@ -21,8 +21,8 @@ pip install pytorch-bench
 ```
 
 ## Example
-```python 
-import torch 
+```python
+import torch
 from torchvision.models import resnet50, ResNet50_Weights
 from pytorch_bench import benchmark
 
@@ -30,13 +30,35 @@ from pytorch_bench import benchmark
 model = resnet50(weights=ResNet50_Weights.DEFAULT)
 example_input = torch.randn(1, 3, 224, 224)
 
-# Run benchmark 
+# Run benchmark
 results = benchmark(model, example_input)
 ```
-You can run ```example.py``` to see the output in your terminal and play with the different functions. 
+You can run ```example.py``` to see the output in your terminal and play with the different functions.
 
+### Benchmarking YOLO Models
 
-## Advanced Usage 
+You can also benchmark YOLO models using the same benchmark function. The tool will automatically detect if it's a YOLO model and use the appropriate benchmarking method:
+
+```python
+from ultralytics import YOLO
+from pytorch_bench import benchmark
+
+# Load a YOLO model
+model = YOLO('yolo11n.pt')  # or any other YOLO model
+
+# Run benchmark with image size 640
+results = benchmark(model, 640)
+
+# The results will include:
+# - Number of layers and parameters
+# - FLOPs
+# - GPU memory usage
+# - FPS and inference time
+# - Energy consumption metrics
+```
+You can run ```example_yolo.py``` to see the output in your terminal and play with the different functions.
+
+## Advanced Usage
 ### Tracking gpu memory for a torch model
 ```python
 from pytorch_bench import track_gpu_memory
@@ -56,8 +78,8 @@ from pytorch_bench import detailed_memory_info
 
 detailed_memory_info()
 ```
-### Calculating model sparsity 
-```python 
+### Calculating model sparsity
+```python
 from pytorch_bench import get_model_sparsity, get_layer_sparsity
 
 sparsity = get_model_sparsity(model)
@@ -74,6 +96,7 @@ When plot=True is set in the benchmark function, two plots will be generated:
 2) *weight_distribution.png*: Histograms of weight distributions for each layer.
 
 These plots can provide insights into the model's architecture and weight patterns.
+
 
 
 ### Notes
